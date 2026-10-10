@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/*
+ * Brand design tokens - Portfolio CMS
+ * Cream/neutral surfaces dominate; burgundy is the primary accent.
+ * No floral/decorative motifs anywhere in the system.
+ */
+@theme {
+  --color-cream: #FDF7F2;
+  --color-burgundy: #6D1F2F;
+  --color-rosewood: #B66E74;
+  --color-blush: #E8B7BD;
+  --color-sage: #A8B79D;
+  --color-muted-gold: #C8A96A;
+  --color-charcoal: #2E2A29;
+  --color-warm-gray: #DDD6D1;
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-sans: "Inter", "Geist", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+  }
+
+  /* Accessible, visible focus states from Phase 0 onward */
+  :focus-visible {
+    outline: 2px solid var(--color-burgundy);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

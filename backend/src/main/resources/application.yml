@@ -1,0 +1,48 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: portfolio-cms-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:portfolio_cms}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Kolkata
+
+  jackson:
+    default-property-inclusion: non_null
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+# Application-specific config
+app:
+  jwt:
+    secret: ${JWT_SECRET:portfolio-cms-default-dev-jwt-secret-key-32-bytes-long}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  security:
+    ip-hash-secret: ${IP_HASH_SECRET:default-dev-secret-change-in-production}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://localhost:5175}
+  storage:
+    upload-dir: ${UPLOAD_DIR:./uploads}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

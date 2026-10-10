@@ -1,0 +1,30 @@
+# Environment variables and secrets
+backend/.env
+frontend/.env
+*.env
+.env
+.env.local
+.env.*.local
+
+# Backend build and runtime artifacts
+backend/target/
+backend/uploads/
+target/
+
+# Frontend dependencies and build artifacts
+frontend/node_modules/
+frontend/dist/
+node_modules/
+dist/
+
+# Logs
+*.log
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
