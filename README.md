@@ -1,421 +1,404 @@
-# Portfolio CMS — Phase 0 + Phase 1 (Foundation + Authentication)
+# Portfolio CMS
 
-Phase 0 is the Spring Boot 3 + React/Vite foundation. Phase 1 adds real
-authentication on top of it: registration, login, JWT issuance/validation,
-protected routes, and logout. **No other feature module (Profile, Projects,
-Dashboard, etc.) is implemented yet** — those start in Phase 2 onward.
+### Build, manage, and showcase your developer portfolio from one workspace.
 
-This README gives exact setup and run steps for **Windows PowerShell**.
+Portfolio CMS is a full-stack web application that helps developers create and manage a professional portfolio through a centralized dashboard. It brings profile management, project showcasing, skills, experience, education, resume management, and recruiter-focused features together in one place.
 
----
+Instead of manually maintaining a portfolio website, developers can manage their content through a dedicated workspace and publish it as a public portfolio.
 
-## 1. Prerequisites
-
-Install these first and confirm versions in PowerShell:
-
-| Tool | Required version | Check with |
-|---|---|---|
-| Java (JDK) | 21 | `java -version` |
-| Maven | 3.8+ | `mvn -version` |
-| Node.js | 20+ | `node -v` |
-| npm | 10+ | `npm -v` |
-| MySQL Server | 8.0+ | `mysql --version` |
-
-If any of these are missing, install them before continuing:
-- JDK 21: https://adoptium.net/
-- Maven: https://maven.apache.org/download.cgi
-- Node.js (includes npm): https://nodejs.org/
-- MySQL: https://dev.mysql.com/downloads/installer/
-
-> **This project requires JDK 21 specifically — not just as a target,
-> but as the JVM that runs Maven itself.** `java.version=21` in
-> `backend/pom.xml` controls the compiled bytecode level, but `mvn`
-> always runs on whatever JDK your `JAVA_HOME`/`PATH` currently resolve
-> to. If a newer JDK (e.g. 24) is what actually launches Maven — common
-> on machines with more than one JDK installed — Lombok's annotation
-> processor (which hooks into `javac`'s internal, version-specific API)
-> can fail with an opaque
-> `ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag ::
-> UNKNOWN` deep in the compiler, not a helpful "wrong JDK" message. A
-> `maven-enforcer-plugin` rule in `backend/pom.xml` now checks this at
-> the start of every build and fails clearly instead, telling you to
-> fix your JDK rather than leaving you to decode that error.
->
-> On Windows PowerShell, before running any `mvn` command, point the
-> current session at JDK 21 explicitly:
-> ```powershell
-> $env:JAVA_HOME="C:\Program Files\Java\jdk-21"
-> $env:Path="$env:JAVA_HOME\bin;$env:Path"
-> ```
-> Then confirm both report 21 before continuing:
-> ```powershell
-> java -version
-> mvn -version
-> ```
-> This only affects the current PowerShell session — if a new terminal
-> reverts to a different JDK, re-run these two lines in it. To fix this
-> permanently instead of per-session, set `JAVA_HOME` in Windows'
-> System Environment Variables to your JDK 21 install path.
-
-> **Note on this ZIP:** the Phase 1 backend source has been carefully
-> hand-reviewed but, like Phase 0, **could not be compiled in the
-> environment that generated it** (same Maven Central network restriction).
-> Phase 0's build/health check were verified by you locally already — run
-> `mvn clean install` again in Section 3.2 as your first real check on the
-> new auth code, and see **Troubleshooting** if anything fails.
+**Repository:** [shifana0105/Portfolio_cms](https://github.com/shifana0105/Portfolio_cms)
 
 ---
 
-## 2. Create the MySQL database
+## Table of Contents
 
-Open PowerShell and log into MySQL:
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Getting Started](#getting-started)
+- [Environment Configuration](#environment-configuration)
+- [Running the Application](#running-the-application)
+- [Application Routes](#application-routes)
+- [API Overview](#api-overview)
+- [Testing](#testing)
+- [Security](#security)
+- [Future Improvements](#future-improvements)
+- [Contributing](#contributing)
+- [Author](#author)
 
-```powershell
-mysql -u root -p
+---
+
+## Features
+
+### Authentication and Account Security
+- User registration and login
+- JWT-based authentication
+- Protected dashboard routes
+- Password hashing using BCrypt
+- Ownership checks for protected resources
+
+### Portfolio Management
+- **Profile Management:** Maintain your name, professional headline, biography, location, and social links.
+- **Projects:** Showcase projects with descriptions, technology stacks, GitHub links, live demos, and featured-project ordering.
+- **Skills:** Organize technical skills by category and proficiency level.
+- **Experience:** Manage professional experience and employment timelines.
+- **Education:** Maintain academic qualifications and relevant details.
+- **Resume Management:** Upload, view, download, replace, and delete your resume, subject to validation rules.
+
+### Dashboard and Portfolio Health
+- Centralized portfolio management workspace
+- Portfolio completion tracking
+- Portfolio health score and improvement suggestions
+- Project, skill, experience, and education summaries
+- Recent activity based on portfolio data
+
+### Public Portfolio
+- Shareable portfolio URL using a username
+- Public presentation of profile and portfolio information
+- Featured projects and professional background
+- Multiple portfolio presentation themes
+- Responsive layout for different screen sizes
+
+### Recruiter Experience and Analytics
+- Recruiter Mode for a focused professional presentation
+- Portfolio view tracking
+- Analytics dashboard for viewing activity
+- QR code for sharing the public portfolio
+
+### Contact and Inbox
+- Public portfolio contact form
+- Contact message validation
+- Rate limiting to reduce abuse
+- Dashboard inbox for viewing received messages
+
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | React, Vite, JavaScript |
+| Styling and UI | Tailwind CSS, responsive CSS |
+| Animations | Framer Motion |
+| Routing | React Router |
+| HTTP Client | Axios |
+| Backend | Java 21, Spring Boot 3 |
+| Security | Spring Security, JWT, BCrypt |
+| Persistence | Spring Data JPA, Hibernate |
+| Database | MySQL 8 |
+| Build Tools | Maven, npm |
+| Testing | JUnit, Spring Boot Test, H2 for isolated tests |
+| Version Control | Git and GitHub |
+
+---
+
+## Architecture
+
+The application follows a frontend–backend architecture.
+
+```text
+React + Vite Frontend
+        |
+        | REST API / HTTP
+        v
+Spring Boot Backend
+        |
+        | Spring Data JPA
+        v
+     MySQL Database
 ```
 
-Then, inside the `mysql>` prompt:
+- **Frontend:** Renders the user interface, manages navigation, and communicates with the backend.
+- **Backend:** Handles authentication, business logic, validation, authorization, and API requests.
+- **Database:** Stores user accounts and portfolio information persistently.
+- **Resume storage:** Uses local file storage for the current development setup, with validation and access controls.
+
+The frontend and backend are maintained in the same repository.
+
+---
+
+## Getting Started
+
+Follow these instructions to run the application locally on Windows.
+
+### Prerequisites
+
+Install the following tools before starting:
+
+| Tool | Version |
+|---|---|
+| Java JDK | 21 |
+| Apache Maven | 3.8+ |
+| Node.js | 20+ |
+| npm | 10+ |
+| MySQL Server | 8.0+ |
+| Git | Latest stable version |
+
+Verify your installations:
+
+```powershell
+java -version
+mvn -version
+node -v
+npm -v
+git --version
+```
+
+**Important:** Maven must run using JDK 21. If your system has multiple Java versions installed, ensure `JAVA_HOME` and the Maven runtime point to JDK 21.
+
+### 1. Clone the repository
+
+```powershell
+git clone https://github.com/shifana0105/Portfolio_cms.git
+cd Portfolio_cms
+```
+
+### 2. Create the MySQL database
+
+Start MySQL and connect using an account with database creation privileges.
 
 ```sql
-CREATE DATABASE portfolio_cms CHARACTER SET utf8mb4;
-EXIT;
+CREATE DATABASE portfolio_cms
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
 ```
 
-Phase 0 had no entities. Phase 1 adds `User`, and `spring.jpa.hibernate.ddl-auto=update`
-(set in `application.yml`, documented there as an MVP trade-off) means the
-`users` table is created automatically the first time the backend starts
-against this database — no manual migration needed for Phase 1.
+The application uses MySQL for persistent development data. Hibernate's `update` configuration can create or update the schema during startup; it is not a replacement for managed production database migrations.
 
 ---
 
-## 3. Backend setup and run
+## Environment Configuration
 
-Open PowerShell in the `backend` folder:
+Configure your local environment before starting the backend.
 
-```powershell
-cd backend
-```
+### Backend configuration
 
-### 3.1 Set environment variables (current PowerShell session)
+Open PowerShell in the project root and set the required environment variables for the current terminal session:
 
 ```powershell
+$env:JAVA_HOME="C:\Program Files\Java\jdk-21"
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+
 $env:SERVER_PORT="8080"
 $env:DB_HOST="localhost"
 $env:DB_PORT="3306"
 $env:DB_NAME="portfolio_cms"
 $env:DB_USERNAME="root"
-$env:DB_PASSWORD="your_mysql_password"
-$env:JWT_SECRET="a_long_random_string_at_least_32_characters_local_dev_only"
+$env:DB_PASSWORD="YOUR_MYSQL_PASSWORD"
+
+$env:JWT_SECRET="REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS"
 $env:JWT_EXPIRATION_MS="86400000"
-$env:IP_HASH_SECRET="temporary_placeholder_unused_until_phase9"
+
+$env:IP_HASH_SECRET="REPLACE_WITH_A_SEPARATE_RANDOM_SECRET"
 $env:CORS_ALLOWED_ORIGINS="http://localhost:5173"
 $env:UPLOAD_DIR="./uploads"
 ```
 
-These only last for the current PowerShell window. See `.env.example`
-for the full list of variables — copy it to `.env` for your own
-reference (the app itself reads real environment variables, not the
-`.env` file directly, in this Phase 0 setup).
+Replace the example passwords and secrets with your own values. Do not commit real credentials to GitHub.
 
-### 3.2 Build
+These environment variables apply to the current PowerShell session. Configure them in your IDE's run configuration or your local environment if needed across sessions.
 
-```powershell
-mvn clean install
-```
+See `backend/.env.example` for the project's environment-variable reference. Spring Boot does not automatically load a plain `.env` file unless additional support is configured.
 
-### 3.3 Run
+### Frontend configuration
 
-```powershell
-mvn spring-boot:run
-```
-
-The backend starts on **http://localhost:8080**.
-
-### 3.4 Verify the health endpoint
-
-In a **new** PowerShell window:
-
-```powershell
-curl http://localhost:8080/api/v1/health
-```
-
-Expected response:
-
-```json
-{"status":"UP","service":"portfolio-cms-backend","timestamp":"..."}
-```
-
----
-
-## 4. Frontend setup and run
-
-Open a **new** PowerShell window in the project root:
+Open a separate PowerShell terminal:
 
 ```powershell
 cd frontend
-```
-
-### 4.1 Configure the API URL
-
-```powershell
 Copy-Item .env.example .env
 ```
 
-The default value (`http://localhost:8080/api/v1`) matches the backend
-defaults above — no edit needed unless you changed `SERVER_PORT`.
+Check that `frontend/.env` contains the correct API base URL:
 
-### 4.2 Install dependencies
-
-```powershell
-npm install
+```env
+VITE_API_BASE_URL=http://localhost:8080/api/v1
 ```
 
-### 4.3 Run (development server)
+Keep local `.env` files out of version control.
+
+---
+
+## Running the Application
+
+### 1. Start the backend
+
+Open a terminal in the repository root:
 
 ```powershell
+cd backend
+mvn clean test
+mvn spring-boot:run
+```
+
+The backend should be available at:
+
+`http://localhost:8080`
+
+Check the health endpoint:
+
+`http://localhost:8080/api/v1/health`
+
+### 2. Start the frontend
+
+Open another terminal:
+
+```powershell
+cd frontend
+npm install
 npm run dev
 ```
 
-The frontend starts on **http://localhost:5173**. Open it in a browser —
-the landing page pings the backend health endpoint and shows
-"Backend reachable" once both apps are running.
+The frontend should be available at:
 
-### 4.4 Build (production build)
+`http://localhost:5173`
+
+The Vite development server is configured to use port `5173` strictly. If that port is already occupied, stop the process using it before restarting Vite.
+
+### 3. Build the frontend
+
+From the `frontend` directory:
 
 ```powershell
+npm run lint
 npm run build
 ```
 
-Output goes to `frontend/dist/`.
+The production build is generated in `frontend/dist/`.
 
 ---
 
-## 4.5 Phase 1 — Authentication
+## Application Routes
 
-**Backend endpoints** (all under `/api/v1`):
-
-| Method | Path | Auth required? | Purpose |
-|---|---|---|---|
-| POST | `/auth/register` | No | Create an account, returns a JWT + user |
-| POST | `/auth/login` | No | Authenticate, returns a JWT + user |
-| POST | `/auth/logout` | No | Client-symmetry endpoint only — see security note below |
-| GET | `/auth/me` | **Yes** | Returns the caller's own user record, identified from the token |
-
-Every other `/api/**` endpoint (including `/auth/me`) requires
-`Authorization: Bearer <token>`. `/api/v1/health` stays public.
-
-**Error response contract:** every error from the API — validation
-failures, duplicate email, invalid credentials, an unhandled server
-error, and Spring-Security-level 401s/403s alike — is the same shape:
-
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": { "email": "Email must be a valid address" }
-}
-```
-
-`message` is always present. `errors` (a field → message map) is present
-only for validation failures; every other error omits it. A request to a
-protected endpoint with no token, an expired token, or a malformed token
-gets `401` with `message: "Authentication required"` and no `errors` key
-— this is wired via a custom `AuthenticationEntryPoint`
-(`RestAuthEntryPoint`), since Spring Security rejects these before they
-reach a controller and `@RestControllerAdvice` alone can't shape them. A
-403 (nothing currently triggers one — no roles exist yet) would get the
-same contract via `RestAccessDeniedHandler`.
-
-**Frontend routes:**
-
-| Path | Access | Notes |
-|---|---|---|
-| `/login` | Public | Redirects to `/welcome` if already logged in |
-| `/register` | Public | Same redirect behavior |
-| `/welcome` | Protected | Placeholder page proving the auth flow works end to end — replaced by the real Dashboard in Phase 7 |
-
-**Security note — JWT storage:** the frontend keeps the token in memory
-(React state) only, never in `localStorage` or a cookie. Trade-off: a hard
-page refresh logs you out (no session-restore flow exists yet). This
-avoids XSS-exposed storage and CSRF-prone cookies, which matters more for
-an MVP than surviving a refresh — revisit if this becomes a real annoyance.
-
-**Security note — logout:** JWT is stateless in this MVP, so there is no
-server-side token revocation/blacklist. `/auth/logout` does not invalidate
-the token; "logging out" is the frontend discarding it from memory. A
-token issued before logout remains technically valid until it expires
-(`JWT_EXPIRATION_MS`, default 24h) if somehow replayed elsewhere — this is
-a known MVP trade-off, not an oversight.
-
-**Security note — CORS:** the backend's CORS config does not set
-`allowCredentials(true)`. This API is authenticated purely via an
-`Authorization: Bearer <token>` header, never a cookie, so the browser
-never needs to send cross-origin credentials — leaving it off matches the
-actual auth architecture (and keeps `allowedHeaders("*")` valid, which
-`allowCredentials(true)` would otherwise forbid).
-
-**Frontend note — 401 handling:** the Axios response interceptor
-(`client.js`) only triggers the global "log the user out" handler for a
-`401` on a request that actually carried a bearer token. A `401` from
-`/auth/login` or `/auth/register` (wrong password, etc.) is just that
-request failing — there's no session to end — so it's returned normally
-for the page to show inline, instead of also clearing an already-empty
-auth state.
-
----
-
-## 5. URLs summary
-
-| App | URL |
+| Route | Purpose |
 |---|---|
-| Backend health check | http://localhost:8080/api/v1/health |
-| Frontend | http://localhost:5173 |
+| `/` | Landing page |
+| `/login` | User login |
+| `/register` | Account registration |
+| `/dashboard` | Main workspace |
+| `/profile` | Profile management |
+| `/projects` | Project management |
+| `/skills` | Skills management |
+| `/experience` | Experience management |
+| `/education` | Education management |
+| `/resume` | Resume management |
+| `/inbox` | Contact messages |
+| `/analytics` | Portfolio analytics |
+| `/p/:username` | Public portfolio |
+
+Routes requiring authentication are protected by the frontend, with authorization enforced by the backend for protected resources.
 
 ---
 
-## 6. Stopping and restarting
+## API Overview
 
-**Stop:** in each PowerShell window running `mvn spring-boot:run` or
-`npm run dev`, press `Ctrl + C`.
+The REST API uses the `/api/v1` prefix.
 
-**Restart backend:**
-```powershell
-cd backend
-mvn spring-boot:run
-```
-(re-set the environment variables from Section 3.1 first if you opened
-a new PowerShell window)
+| Area | Example endpoint | Purpose |
+|---|---|---|
+| Health | `GET /api/v1/health` | Check backend availability |
+| Authentication | `POST /api/v1/auth/register` | Register a user |
+| Authentication | `POST /api/v1/auth/login` | Authenticate a user |
+| Profile | `/api/v1/profile` | Manage profile information |
+| Projects | `/api/v1/projects` | Manage projects |
+| Skills | `/api/v1/skills` | Manage skills |
+| Experience | `/api/v1/experience` | Manage experience |
+| Education | `/api/v1/education` | Manage education |
+| Dashboard | `/api/v1/dashboard` | Retrieve dashboard information |
+| Public portfolio | `/api/v1/public/{username}` | Retrieve a public portfolio |
+| Contact | `/api/v1/public/{username}/contact` | Submit a contact message |
+| Analytics | `/api/v1/analytics` | Retrieve analytics information |
 
-**Restart frontend:**
-```powershell
-cd frontend
-npm run dev
-```
+Protected endpoints require a valid JWT in the request header:
 
----
-
-## 7. Troubleshooting
-
-**`mvn` or `java` not recognized**
-Java/Maven isn't on PATH. Reinstall and ensure "Add to PATH" is checked,
-or add the install's `bin` folder to your PATH environment variable
-manually, then open a new PowerShell window.
-
-**Backend fails to connect to MySQL (`Communications link failure` /
-`Access denied for user`)**
-- Confirm MySQL is running (`services.msc` → look for "MySQL80" or similar).
-- Confirm `DB_USERNAME`/`DB_PASSWORD` match a real MySQL account.
-- Confirm the database exists: `mysql -u root -p -e "SHOW DATABASES;"`.
-
-**Backend fails to start with "JWT_SECRET is not set" or a key-length error**
-`JWT_SECRET` must be set and at least 32 characters (HS256 needs a 256-bit
-key). The app fails fast at startup rather than silently signing tokens
-with a weak or missing key — set a longer value in Section 3.1 and restart.
-
-**Register/login returns 400 with field errors**
-Check the JSON body matches the DTOs: `fullName` (≤100 chars), `email`
-(valid format), `password` (8–72 chars). The response's `errors` object
-names exactly which field failed and why.
-
-**A previously-working protected page suddenly 401s**
-Expected if the token expired (`JWT_EXPIRATION_MS`) or you refreshed the
-page (token is memory-only, not persisted — see Phase 1 security note
-above). Log in again.
-
-**Compilation fails with dozens of "cannot find symbol" errors on getters/setters, or "constructor is not applicable" on `SecurityConfig`**
-This is Lombok's annotation processor not running - nothing in the
-committed `pom.xml` disables it (no `-proc:none`, no conflicting
-`annotationProcessorPaths`), so if you hit this, it's local-environment:
-1. Confirm `mvn -version` reports Java 21 and that it's the same JDK your
-   IDE/PATH otherwise points to - a mismatched `JAVA_HOME` is the most
-   common cause.
-2. Delete `~/.m2/repository/org/projectlombok` and re-run `mvn clean test`
-   to rule out a stale/partial cached Lombok jar.
-3. Run `mvn dependency:tree | grep lombok` - there should be exactly one
-   resolved version (whatever `spring-boot-starter-parent:3.3.4` manages,
-   currently 1.18.32). Multiple versions means something else on your
-   machine (a settings.xml, a different parent POM cached locally) is
-   pulling in a second one.
-`pom.xml`'s `maven-compiler-plugin` now pins an explicit
-`annotationProcessorPaths` entry for Lombok as a defense against
-environment-specific auto-discovery issues; it doesn't change which
-Lombok version is used.
-
-**Backend build fails resolving dependencies**
-Maven needs internet access on first build to download dependencies
-from Maven Central into your local `~/.m2` repository. Confirm you have
-a working internet connection and no corporate proxy/firewall is
-blocking `repo.maven.apache.org`.
-
-**Port already in use (8080 or 5173)**
-Something else is using the port. Either stop that process, or change
-`SERVER_PORT` (backend) / pass `--port` to `npm run dev -- --port 5174`
-(frontend) and update `VITE_API_BASE_URL` in `frontend/.env` to match.
-
-**Frontend shows "Backend not reachable"**
-- Confirm the backend is actually running (`curl http://localhost:8080/api/v1/health`).
-- Confirm `frontend/.env` `VITE_API_BASE_URL` matches the backend's actual
-  host/port.
-- Confirm `CORS_ALLOWED_ORIGINS` (backend) includes the frontend's URL
-  exactly (`http://localhost:5173`, no trailing slash).
-
-**PowerShell `curl` behaves oddly / shows extra fields**
-PowerShell aliases `curl` to `Invoke-WebRequest`. This is fine for a
-quick check; if you want raw `curl.exe` behavior, run `curl.exe` instead.
-
----
-
-## 8. Automated tests (Phase 1)
-
-`backend/src/test/java/com/portfoliocms/app/controller/AuthControllerTest.java`
-covers the auth surface end to end against an in-memory H2 database (no
-MySQL needed): registration (success, BCrypt hash persisted, duplicate
-email, invalid data), login (success, wrong password, unknown email), and
-`/auth/me` (no token, valid token, malformed token, expired token). Run
-with:
-
-```powershell
-cd backend
-mvn test
+```http
+Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
-The existing `PortfolioCmsApplicationTests.contextLoads()` smoke test is
-unchanged.
+For exact request fields, response formats, and supported operations, refer to the corresponding controller and DTO classes in `backend/src/main/java/com/portfoliocms/app/`.
 
 ---
 
-## 9. Manual test checklist (Phase 1)
+## Testing
 
-Run these in order against a fresh `users` table (or note you're reusing one):
+### Backend tests
 
-1. `POST /auth/register` with a new email → `201`, response has `accessToken` + `user`.
-2. Repeat the same registration → `409 Conflict`, body is `{success: false, message: "An account with this email already exists"}`.
-3. `POST /auth/register` with a bad email / short password → `400`, body is `{success: false, message: "Validation failed", errors: {...}}` naming the bad field(s).
-4. `POST /auth/login` with the registered email + correct password → `200`, `accessToken` + `user`.
-5. `POST /auth/login` with wrong password → `401`, `message: "Invalid email or password"` (does not reveal whether the email exists).
-6. `POST /auth/login` with an unregistered email → same `401` + same generic message as #5.
-7. `GET /auth/me` with no token → `401`, body is `{success: false, message: "Authentication required"}` (not empty).
-8. `GET /auth/me` with the token from #1/#4 in `Authorization: Bearer <token>` → `200`, body matches the registered/logged-in user (`id`, `email`, `fullName`, no `passwordHash`).
-9. `GET /auth/me` with an expired or hand-edited/garbage token → `401`, same generic "Authentication required" body — doesn't reveal which failure mode it was.
-10. Inspect a register/login `400`/`401`/`409` response and confirm it has no `timestamp` or bare `error`/`fieldErrors` keys anywhere — only `success`, `message`, and (for validation only) `errors`.
-11. In the browser network tab, confirm no CORS preflight response includes `Access-Control-Allow-Credentials` (removed — this API doesn't use cookies).
-12. Frontend: register a new account via `/register` → redirected to `/welcome`, name shown.
-13. Frontend: log out from `/welcome` → redirected to `/login`; visiting `/welcome` directly afterward redirects back to `/login`.
-14. Frontend: log in again via `/login` → reaches `/welcome`.
-15. Frontend: on `/login`, submit a wrong password → the inline form error appears ("Invalid email or password") and you stay on the login page — this must NOT trigger the global logout handler or redirect (there's nothing to log out of).
-16. Frontend: visit `/login` or `/register` while already logged in → redirected to `/welcome` instead of showing the form.
-17. Frontend: submit the register/login forms with empty fields → inline validation errors appear, no request is sent.
-18. Refresh the browser while on `/welcome` → logged out (expected — see the JWT storage trade-off note above), redirected to `/login`.
-19. Frontend: while logged in on `/welcome`, let the token expire (or edit it to be invalid) then trigger any authenticated call — the global logout handler fires this time (token WAS present and got rejected), redirecting to `/login`.
-20. Tab through the login/register forms with keyboard only → visible focus outlines on every field/button; screen reader announces field errors (`role="alert"`).
+From the `backend` directory:
+
+```powershell
+mvn clean test
+```
+
+The test suite uses an isolated H2 database where configured, so automated tests do not need to modify the normal development database.
+
+### Frontend checks
+
+From the `frontend` directory:
+
+```powershell
+npm run lint
+npm run build
+```
+
+These commands check code quality and verify that the frontend can be compiled for production.
 
 ---
 
-## 10. What's intentionally NOT in Phase 1
+## Security
 
-No Profile, Projects, Skills, Experience, Education, Resume, Dashboard,
-Health Score, Public Portfolio, Recruiter Mode, Analytics, or Contact/Inbox.
-No password reset, no email verification, no refresh tokens, no
-role/permission system. These are scoped to Phase 2 onward per the
-approved development plan. Phase 1's only job is: a person can register,
-log in, reach a protected page, and log out — securely and end to end.
+The project incorporates several security measures:
+
+- Password hashing with BCrypt.
+- JWT-based authentication and protected backend endpoints.
+- Server-side resource ownership checks.
+- Request validation and centralized error handling.
+- Resume file type and size validation.
+- Filename sanitization and protection against path traversal.
+- Restrictions on public access to private resume files.
+- HMAC-SHA256-based IP hashing for recruiter analytics rather than storing raw IP addresses.
+- Rate limiting for public contact submissions.
+- Environment-based configuration for credentials and secrets.
+
+**Deployment note:** The current application is designed as a full-stack project with a local development configuration. Before production deployment, review secret management, database migrations, HTTPS, persistent file storage, rate limiting across multiple instances, monitoring, backups, and deployment-specific CORS settings.
+
+---
+
+## Future Improvements
+
+Potential areas for continued development include:
+
+- Cloud-based resume and asset storage.
+- Production deployment with CI/CD.
+- Email notifications for incoming contact messages.
+- Password reset and email verification.
+- More portfolio themes and customization options.
+- Expanded automated integration and end-to-end tests.
+- More detailed analytics and portfolio performance insights.
+
+---
+
+## Contributing
+
+Suggestions and improvements are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Implement and test your changes.
+4. Submit a pull request with a clear description.
+
+For larger changes, consider discussing the proposed approach before implementation.
+
+---
+
+## Author
+
+**Shifana Sherin S**
+
+B.Tech Information Technology
+
+- GitHub: [@shifana0105](https://github.com/shifana0105)
+- Portfolio CMS Repository: [Portfolio_cms](https://github.com/shifana0105/Portfolio_cms)
+
+---
+
+*Built to make creating and maintaining a professional developer portfolio simpler and more manageable.*
